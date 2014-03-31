@@ -641,7 +641,7 @@ alx_rxintr(struct alx_softc *sc)
 
 	count = 0;
 	rrd_cidx = sc->alx_rx_queue.cidx;
-	printf("consuming packets starting at %d\n", rrd_cidx);
+	//printf("consuming packets starting at %d\n", rrd_cidx);
 	while (1) {
 		rrd = &sc->alx_rx_queue.rrd_hdr[rrd_cidx];
 		if ((rrd->word3 & (1 << RRD_UPDATED_SHIFT)) == 0)
@@ -669,7 +669,7 @@ alx_rxintr(struct alx_softc *sc)
 		m->m_pkthdr.len = m->m_len;
 		m->m_pkthdr.rcvif = ifp;
 
-		printf("read a %d-byte packet\n", m->m_len);
+		//printf("read a %d-byte packet\n", m->m_len);
 
 		/* Pass the packet up the stack. */
 		ALX_UNLOCK(sc);
@@ -681,7 +681,7 @@ alx_rxintr(struct alx_softc *sc)
 			rrd_cidx = 0;
 	}
 
-	printf("consumed %d packets\n", count);
+	//printf("consumed %d packets\n", count);
 
 	if (count > 0) {
 		sc->alx_rx_queue.cidx = rrd_cidx;
@@ -689,7 +689,7 @@ alx_rxintr(struct alx_softc *sc)
 		/* Refresh mbufs. */
 		rrd_pidx = sc->alx_rx_queue.pidx;
 		while (rrd_pidx != rrd_cidx) {
-			printf("refreshing mbuf at %d\n", rrd_pidx);
+			//printf("refreshing mbuf at %d\n", rrd_pidx);
 			if (alx_newbuf(sc, rrd_pidx) != 0)
 				break;
 			if (++rrd_pidx == sc->rx_ringsz)
@@ -720,7 +720,7 @@ alx_txintr(struct alx_softc *sc)
 	tpd_cidx = sc->alx_tx_queue.cidx;
 	ALX_MEM_R16(&sc->hw, ALX_TPD_PRI0_CIDX, &tpd_hw_cidx);
 
-	printf("in txintr cidx is %d, hw_cidx is %d\n", tpd_cidx, tpd_hw_cidx);
+	//printf("in txintr cidx is %d, hw_cidx is %d\n", tpd_cidx, tpd_hw_cidx);
 
 	while (tpd_cidx != tpd_hw_cidx) {
 		tx_buf = &sc->alx_tx_queue.bf_info[tpd_cidx];
@@ -1003,7 +1003,7 @@ alx_int_task(void *context, int pending __unused)
 {
 	struct alx_softc *sc;
 
-	printf("in alx_int_task\n");
+//	printf("in alx_int_task\n");
 
 	sc = context;
 
@@ -1051,7 +1051,7 @@ alx_intr_legacy(void *arg)
 	if (intr & ALX_ISR_DIS || (intr & hw->imask) == 0)
 		return (FILTER_STRAY);
 
-	printf("intr is 0x%x, imask is 0x%x\n", intr, hw->imask);
+	//printf("intr is 0x%x, imask is 0x%x\n", intr, hw->imask);
 
 	/* Acknowledge and disable interrupts. */
 	ALX_MEM_W32(hw, ALX_ISR, intr | ALX_ISR_DIS);
@@ -1515,6 +1515,9 @@ alx_attach(device_t dev)
 	ifp->if_ioctl = alx_ioctl;
 	ifp->if_start = alx_start;
 	ifp->if_init = alx_init;
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	ifp->if_snd.ifq_drv_maxlen = IFQ_MAXLEN;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	ether_ifattach(ifp, hw->mac_addr);
 
